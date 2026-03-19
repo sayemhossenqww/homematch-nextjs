@@ -7,6 +7,7 @@ import { ArrowRight, Lock, Loader2, CheckCircle2, Shield, Clock, Star, Users, Ph
 import { useState } from "react";
 import { Firm } from "@/types/firm";
 import Link from "next/link";
+import { createClient } from "@/lib/supabase/client";
 
 const schema = z.object({
   propertyType: z.string().min(1, "Please select a property type"),
@@ -42,9 +43,19 @@ export default function FirmEnquirySidebar({ firm }: { firm: Firm }) {
     setIsSubmitting(true);
     setIsError(false);
     try {
-      // TODO: replace with real API call
-      await new Promise(r => setTimeout(r, 1500));
-      void data;
+      const supabase = createClient();
+      const { error } = await supabase.from("enquiries").insert({
+        name:          data.name,
+        whatsapp:      `+65${data.mobile}`,
+        firm_slug:     firm.slug,
+        property_type: data.propertyType.toLowerCase(),
+        budget:        data.budget,
+        timeline:      data.timeline,
+        message:       data.notes || null,
+        multi_send:    data.multiSend ?? false,
+        status:        "new",
+      });
+      if (error) throw error;
       setIsSuccess(true);
     } catch {
       setIsError(true);

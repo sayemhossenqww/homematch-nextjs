@@ -1,6 +1,7 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
 import {
   ArrowRight, ArrowLeft, CheckCircle2, Check,
   // Timeline
@@ -1409,8 +1410,52 @@ export default function FindMyIdForm() {
     if (Object.keys(errs).length) { setErrors(errs); return; }
     setErrors({});
     setLoad(true);
-    try { localStorage.setItem("hm_lead", JSON.stringify({ ...form, submittedAt: new Date().toISOString() })); } catch { /* noop */ }
-    await new Promise(r => setTimeout(r, 1400));
+
+    try {
+      const supabase = createClient();
+      await supabase.from("leads").insert({
+        name:          form.name.trim(),
+        email:         form.email.trim().toLowerCase(),
+        whatsapp:      form.whatsapp.trim(),
+        contact_time:  form.contactTime || null,
+        referral_source: form.referralSource || null,
+        // Timeline
+        timeline:      form.timeline || null,
+        // Property
+        property_type: form.propertyType || null,
+        hdb_type:      form.hdbType || null,
+        hdb_status:    form.hdbStatus || null,
+        condo_type:    form.condoType || null,
+        condo_status:  form.condoStatus || null,
+        landed_type:   form.landedType || null,
+        // Location
+        region:        form.region || null,
+        district:      form.district || null,
+        // Scope
+        property_size: form.propertySize || null,
+        condition:     form.condition || null,
+        rooms:         form.rooms.length ? form.rooms : null,
+        reno_type:     form.renoType || null,
+        priorities:    form.priorities.length ? form.priorities : null,
+        // Budget
+        budget:        form.budget || null,
+        reno_loan:     form.renoLoan || null,
+        // Matching
+        styles:        form.styles.length ? form.styles : null,
+        style_other:   form.styleOther || null,
+        working_styles: form.workingStyles.length ? form.workingStyles : null,
+        languages:     form.languages.length ? form.languages : null,
+        special_reqs:  form.specialReqs.length ? form.specialReqs : null,
+        id_experience: form.idExperience || null,
+        residents:     form.residents.length ? form.residents : null,
+        pets:          form.pets.length ? form.pets : null,
+        guarantees:    form.guarantees.length ? form.guarantees : null,
+        status:        "new",
+      });
+    } catch {
+      // Submission failed silently — still redirect to thank-you
+    }
+
     setLoad(false);
     router.push("/find-my-id/thank-you");
   }
